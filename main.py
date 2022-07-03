@@ -25,7 +25,9 @@ ITEMS = {
     'Автомат_АК-47': DAMAGE_ITEMS,
     'Бинт': HEALTH_ITEMS,
 }
-
+TRANSLATE_ITEMS = {
+    'Лекарство':'small_heal'
+}
 ###########
 while True:
     with open('inventory.txt', 'r') as txt:

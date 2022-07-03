@@ -26,7 +26,8 @@ ITEMS = {
     'Бинт': HEALTH_ITEMS,
 }
 TRANSLATE_ITEMS = {
-    'Лекарство':'small_heal'
+    'Лекарство':'small_heal',
+    'Чистка_Оружия':'weapon_cleaning'
 }
 ###########
 while True:

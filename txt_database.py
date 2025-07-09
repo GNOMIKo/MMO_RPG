@@ -20,3 +20,6 @@ class txt_database:
         with open('base.txt', 'w') as txt:
             for i in self.mass:
                 txt.write(str(i) + '\n')
+
+def printd(string):
+    print(f'\033[1;32m!!!DevInfo!!!\n{string}\n!!!DevInfo!!!\033[0m')  # Green text

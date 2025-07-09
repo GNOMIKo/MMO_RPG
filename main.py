@@ -1,5 +1,6 @@
 import txt_database
 import random
+from txt_database import printd
 data = txt_database.txt_database()
 ###########
 health_price = 10
@@ -8,7 +9,7 @@ EFFECT = 0
 INVENTORY_MASS = []
 SHOP = {
     'Лекарство': health_price,
-    'Читска_Оружия': damage_price,
+    'Чистка_Оружия': damage_price,
     'Кейс': 100
 }
 HEALTH_ITEMS = {
@@ -111,7 +112,30 @@ while True:
         for i in SHOP:
             print(i,'-',SHOP[i],'золота')
         while True:
-            break
+            buy = input('Что ты хочешь купить? (или "выйти" для выхода из магазина): ').title() 
+            if buy == 'Выйти' or buy == '':
+                break
+            elif buy == 'Список':
+                print('Список товаров:')
+                for item in SHOP:
+                    print(f'{item} - {SHOP[item]} золота') 
+            elif buy in SHOP:
+                if GOLD >= SHOP[buy]:
+                    GOLD -= SHOP[buy]
+                    print(f'Ты купил {buy}! \nУ тебя осталось {GOLD} золота.')
+                    INVENTORY_MASS.append(buy)
+                    printd(INVENTORY_MASS)
+                    
+                    if buy in HEALTH_ITEMS:
+                        HEALTH += HEALTH_ITEMS[buy]
+                        print(f'Твое здоровье увеличилось на {HEALTH_ITEMS[buy]} едениц. \nУ тебя теперь {HEALTH} здоровья.')
+                    elif buy in DAMAGE_ITEMS:
+                        DAMAGE += DAMAGE_ITEMS[buy]
+                        print(f'Твой урон увеличился на {DAMAGE_ITEMS[buy]} едениц. \nУ тебя теперь {DAMAGE} урона.')
+                else:
+                    print('У тебя недостаточно золота!')
+            else:
+                print('Такого товара нет в магазине!')
     elif smth == '3':
         print('\n↓↓↓↓↓↓↓')
         print(USERNAME)

@@ -7,9 +7,17 @@ health_price = 10
 damage_price = 30
 EFFECT = 0
 INVENTORY_MASS = []
+TREASURES = {
+    'Сокровище_1':200,
+    'Сокровище_2':150,
+    'Сокровище_3':100,
+    'Сокровище_4':50,
+}
 SHOP = {
-    'Лекарство': health_price,
-    'Чистка_Оружия': damage_price,
+    'Лекарство': 20,
+    'Бинт': 10,
+    'Чистка_Оружия': 10,
+    'Автомат_Ак-47': 50,
     'Кейс': 100
 }
 HEALTH_ITEMS = {
@@ -18,19 +26,21 @@ HEALTH_ITEMS = {
 }
 DAMAGE_ITEMS = {
     'Чистка_Оружия': 3,
-    'Автомат_АК-47': 15
+    'Автомат_Ак-47': 15
 }
 ITEMS = {
     'Лекарство': HEALTH_ITEMS,
     'Чистка_Оружия': DAMAGE_ITEMS,
-    'Автомат_АК-47': DAMAGE_ITEMS,
+    'Автомат_Ак-47': DAMAGE_ITEMS,
     'Бинт': HEALTH_ITEMS,
 }
 TRANSLATE_ITEMS = {
     'Лекарство':'small_heal',
     'Чистка_Оружия':'weapon_cleaning'
 }
-###########
+#############
+# Functions #
+#############
 def battle(LVL, GOLD, DAMAGE, HEALTH):
     max_health = HEALTH
     monster_health = random.randint(DAMAGE * 5, DAMAGE * 10)
@@ -95,18 +105,34 @@ def battle(LVL, GOLD, DAMAGE, HEALTH):
                 break
         input(f'Монстр бьёт тебя и у тебя остаётся {HEALTH} здоровья.')
     return LVL, GOLD, DAMAGE, HEALTH
+
+def save_inventory(inventory, filename='inventory.txt'):
+    """Сохраняет инвентарь в файл и выводит сообщение об успешном сохранении."""
+    try:
+        with open(filename, 'w') as txt:
+            txt.write(' '.join(inventory))
+        printd(f'[Инвентарь сохранён: {len(inventory)} предмет(ов)]')
+    except Exception as e:
+        printd(f'Ошибка при сохранении инвентаря: {e}')
+
 def shop(GOLD, HEALTH, DAMAGE, INVENTORY_MASS):
     input('В магазине есть разные товраы...')
+    print("#" * 20)
     for i in SHOP:
         print(i, '-', SHOP[i], 'золота')
+    print("#" * 20)
     while True:
+        print(f'У тебя {GOLD} золота.')
         buy = input('Что ты хочешь купить? (или "выйти" для выхода из магазина): ').title()
+        printd(buy)
         if buy == 'Выйти' or buy == '':
             break
         elif buy == 'Список':
             print('Список товаров:')
+            print("#" * 20)
             for item in SHOP:
                 print(f'{item} - {SHOP[item]} золота')
+            print("#" * 20)
         elif buy in SHOP:
             if GOLD >= SHOP[buy]:
                 GOLD -= SHOP[buy]
@@ -120,6 +146,7 @@ def shop(GOLD, HEALTH, DAMAGE, INVENTORY_MASS):
                 else:
                     INVENTORY_MASS.append(buy)
                 printd(INVENTORY_MASS)
+                save_inventory(INVENTORY_MASS)
             else:
                 print('У тебя недостаточно золота!')
         else:
@@ -137,8 +164,56 @@ def show_character(USERNAME, HEALTH, LVL, GOLD, DAMAGE):
 
 def show_inventory(INVENTORY_MASS):
     input('Ты открываешь рюкзак и...')
-    print(*INVENTORY_MASS)
+    for item in INVENTORY_MASS: print(item)
+    while True:
+        do = input("Что ты хочешь использовать? (или 'выйти' для выхода из инвентаря): ").title()
+        if do == 'Выйти' or do == '':
+            break
+        elif do == 'Список':
+            print('Список предметов в инвентаре:')
+            for item in INVENTORY_MASS: print(item)
+        elif do in INVENTORY_MASS:
+            if do in HEALTH_ITEMS:
+                print(f'Ты используешь {do} и восстанавливаешь {HEALTH_ITEMS[do]} здоровья!')
+                INVENTORY_MASS.remove(do)
+                save_inventory(INVENTORY_MASS)
+            elif do in DAMAGE_ITEMS:
+                print(f'Ты используешь {do} и увеличиваешь урон на {DAMAGE_ITEMS[do]} едениц!')
+                INVENTORY_MASS.remove(do)
+                save_inventory(INVENTORY_MASS)
+            elif do == 'Кейс':
+                case_open(INVENTORY_MASS)
+                save_inventory(INVENTORY_MASS)
+            else:
+                print(f'Ты держишь в руках {do}! Какой-то бесполезный предмет...')
 
+def case_open(INVENTORY_MASS):
+    if 'Кейс' in INVENTORY_MASS:
+        print('\nТы открываешь кейс и...')
+        case_items = [
+            'Сокровище_1', 'Сокровище_2', 'Сокровище_3', 'Сокровище_4',
+            'Бинт', 'Лекарство', 'Чистка_Оружия', 'Автомат_Ак-47', 'Кейс',
+            "Мусор", "Мусор", "Мусор", "Мусор", "Мусор", "Мусор", "Мусор"
+        ]
+        item = random.choice(case_items)
+        print(f'Тебе выпало: {item}!')
+        INVENTORY_MASS.remove('Кейс')
+        if item != "Мусор":
+            INVENTORY_MASS.append(item)
+        save_inventory(INVENTORY_MASS)
+        return item
+    else:
+        print('У тебя нет кейса!')
+        return None
+
+#################
+# END FUNCTIONS #
+#################
+
+
+###########################
+# Начальная инициализация #
+###########################
 while True:
     with open('inventory.txt', 'r') as txt:
         for i in txt:
@@ -179,5 +254,4 @@ while True:
     ###########
     data.write()
     # Сохраняем инвентарь в файл
-    with open('inventory.txt', 'w') as txt:
-        txt.write(' '.join(INVENTORY_MASS))
+    save_inventory(INVENTORY_MASS) 

@@ -1,25 +1,38 @@
-class txt_database:
-    def read(self):
-        self.mass = []
-        with open('base.txt', 'r+') as txt:
-            self.mass = [line.strip() for line in txt]
-        self.username = self.mass[0]
-        self.lvl = int(self.mass[1])
-        self.gold = int(self.mass[2])
-        self.damage = int(self.mass[3])
-        self.health = int(self.mass[4])
-        #print("DEVELOPER:",self.username, self.lvl, self.gold, self.damage)
-        #print("DEVELOPER:",self.mass)
+import json
 
-    def write(self):
-        self.mass[0] = self.username
-        self.mass[1] = self.lvl
-        self.mass[2] = self.gold
-        self.mass[3] = self.damage
-        self.mass[4] = self.health
-        with open('base.txt', 'w') as txt:
-            for i in self.mass:
-                txt.write(str(i) + '\n')
+class JsonDatabase:
+    def __init__(self, filename='base.json'):
+        self.filename = filename
+        self.data = {}
+        self.current_id = None
+
+    def load(self):
+        try:
+            with open(self.filename, 'r') as f:
+                self.data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.data = {}
+
+    def save(self):
+        with open(self.filename, 'w') as f:
+            json.dump(self.data, f, indent=4)
+
+    def set_current_player(self, player_id):
+        self.current_id = str(player_id)
+
+    def get_current_player(self):
+        return self.data.get(self.current_id, None)
+
+    def update_current_player(self, player_dict):
+        self.data[self.current_id] = player_dict
+        self.save()
+
+    def create_player(self, player_id, player_dict):
+        self.data[str(player_id)] = player_dict
+        self.save()
+
+    def list_players(self):
+        return {pid: pdata['username'] for pid, pdata in self.data.items()}
 
 def printd(string):
-    print(f'\033[1;32m!!!DevInfo!!!\n{string}\n!!!DevInfo!!!\033[0m')  # Green text
+    print(f'\033[1;32m!!!DevInfo!!!\n{string}\n!!!DevInfo!!!\033[0m')

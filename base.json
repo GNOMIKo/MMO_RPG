@@ -1,0 +1,44 @@
+{
+    "1": {
+        "username": "GNOMIK",
+        "gold": 998108,
+        "damage": 82,
+        "lvl": 269,
+        "health": 78,
+        "inventory": [
+            "\u041a\u0435\u0439\u0441",
+            "\u041a\u0435\u0439\u0441",
+            "\u041a\u0435\u0439\u0441",
+            "\u041a\u0435\u0439\u0441",
+            "\u041a\u0435\u0439\u0441",
+            "\u041c\u0443\u0441\u043e\u0440",
+            "\u041b\u0435\u043a\u0430\u0440\u0441\u0442\u0432\u043e",
+            "\u041b\u0435\u043a\u0430\u0440\u0441\u0442\u0432\u043e",
+            "\u0411\u0438\u043d\u0442"
+        ]
+    },
+    "2": {
+        "username": "PLAYER",
+        "gold": 1000,
+        "damage": 10,
+        "lvl": 1,
+        "health": 100,
+        "inventory": []
+    },
+    "3": {
+        "username": "ERROR",
+        "gold": 0,
+        "damage": 0,
+        "lvl": 0,
+        "health": 0,
+        "inventory": []
+    },
+    "4": {
+        "username": "test",
+        "gold": 44,
+        "damage": 10,
+        "lvl": 14,
+        "health": 28,
+        "inventory": []
+    }
+}

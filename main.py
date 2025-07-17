@@ -11,7 +11,8 @@ SHOP = game_items['SHOP']
 HEALTH_ITEMS = game_items['HEALTH_ITEMS']
 DAMAGE_ITEMS = game_items['DAMAGE_ITEMS']
 TREASURES = game_items['TREASURES']
-MONSTERS = game_items.get('MONSTERS', {})  # Загружаем монстров
+MONSTERS = game_items.get('MONSTERS', {})
+QUESTS = game_items.get('QUESTS', {})  # Загружаем квесты
 
 db = JsonDatabase()
 db.load()
@@ -30,7 +31,8 @@ if player_id == 'new':
         'damage': 10,
         'lvl': 1,
         'health': 100,
-        'inventory': []
+        'inventory': [],
+        'quests': {}  # Инициализируем пустой словарь квестов
     })
     db.set_current_player(new_id)
 else:
@@ -66,6 +68,8 @@ def shop(db, player):
                     print(f'Урон +{DAMAGE_ITEMS[buy]} → {player["damage"]}')
                 else:
                     player["inventory"].append(buy)
+                    # Проверяем квесты на сбор предметов
+                    check_quest_progress(db, player, item_acquired=buy)
                 save_player(db, player)
             else:
                 print('Недостаточно золота!')
@@ -117,9 +121,72 @@ def case_open(db, player):
         player["inventory"].remove('Кейс')
         if item != "Мусор":
             player["inventory"].append(item)
+            # Проверяем квесты на сбор предметов
+            check_quest_progress(db, player, item_acquired=item)
         save_player(db, player)
     else:
         print('Нет кейса!')
+
+def check_quest_progress(db, player, monster_killed=None, item_acquired=None):
+    """Проверяет и обновляет прогресс квестов"""
+    if 'quests' not in player:
+        player['quests'] = {}
+    
+    for quest_id, quest_data in player['quests'].items():
+        if quest_data['completed']:
+            continue
+        quest = QUESTS[quest_id]
+        if quest['type'] == 'kill_monster' and monster_killed == quest['target']:
+            quest_data['progress'] += 1
+        elif quest['type'] == 'collect_item' and item_acquired == quest['target']:
+            quest_data['progress'] += 1
+        
+        if quest_data['progress'] >= quest['amount']:
+            quest_data['completed'] = True
+            print(f'\n🎉 Квест "{quest["description"]}" выполнен!')
+            # Выдача наград
+            player['gold'] += quest['rewards'].get('gold', 0)
+            for item in quest['rewards'].get('items', []):
+                player['inventory'].append(item)
+            print(f'Награда: {quest["rewards"].get("gold", 0)} золота, предметы: {", ".join(quest["rewards"].get("items", []))}')
+        
+    save_player(db, player)
+
+def quest_menu(db, player):
+    """Меню для работы с квестами"""
+    while True:
+        print("\n--- Квесты ---")
+        print("1. Посмотреть доступные квесты")
+        print("2. Принять квест")
+        print("3. Посмотреть активные квесты")
+        print("0. Назад")
+        choice = input("Выбор: ")
+        if choice == "1":
+            print("\nДоступные квесты:")
+            for quest_id, quest in QUESTS.items():
+                if quest_id not in player.get('quests', {}):
+                    print(f"{quest_id}: {quest['description']} (Цель: {quest['amount']} {quest['target']})")
+        elif choice == "2":
+            quest_id = input("Введите ID квеста: ")
+            if quest_id in QUESTS and quest_id not in player.get('quests', {}):
+                player['quests'][quest_id] = {'progress': 0, 'completed': False}
+                print(f"Квест {quest_id} принят!")
+                save_player(db, player)
+            else:
+                print("Некорректный ID или квест уже принят!")
+        elif choice == "3":
+            if not player.get('quests'):
+                print("Нет активных квестов!")
+            else:
+                print("\nАктивные квесты:")
+                for quest_id, quest_data in player['quests'].items():
+                    quest = QUESTS[quest_id]
+                    status = "Выполнен" if quest_data['completed'] else f"{quest_data['progress']}/{quest['amount']}"
+                    print(f"{quest_id}: {quest['description']} (Прогресс: {status})")
+        elif choice == "0":
+            break
+        else:
+            print("Нет такого варианта!")
 
 def battle(db, player):
     LVL = player["lvl"]
@@ -128,16 +195,14 @@ def battle(db, player):
     HEALTH = player["health"]
     max_health = HEALTH
 
-    # Выбираем случайного монстра
     if not MONSTERS:
         print("Монстры не найдены в game_items.json!")
         return player
     monster_name = random.choice(list(MONSTERS.keys()))
     monster = MONSTERS[monster_name]
     
-    # Масштабируем характеристики монстра на основе уровня игрока
-    monster_health = monster["base_health"] + (LVL * 10)  # Увеличиваем здоровье на 10 за уровень
-    monster_damage = monster["base_damage"] + (LVL * 2)   # Увеличиваем урон на 2 за уровень
+    monster_health = monster["base_health"] + (LVL * 10)
+    monster_damage = monster["base_damage"] + (LVL * 2)
     max_monster_health = monster_health
     
     print(f'\n{monster["description"]}')
@@ -155,7 +220,6 @@ def battle(db, player):
                 LVL += (max_monster_health - monster_damage) // 10
                 GOLD += monster["gold_reward"]
                 
-                # Выпадение предметов
                 drop = random.choices(
                     [d["item"] for d in monster["item_drops"]],
                     weights=[d["chance"] for d in monster["item_drops"]],
@@ -164,7 +228,9 @@ def battle(db, player):
                 if drop != "Мусор":
                     player["inventory"].append(drop)
                     print(f'Ты получил: {drop}!')
+                    check_quest_progress(db, player, item_acquired=drop)
                 print(f'Получено {monster["gold_reward"]} золота.')
+                check_quest_progress(db, player, monster_killed=monster_name)
                 break
             elif HEALTH <= 0:
                 print(f'\n{monster_name} победил тебя!')
@@ -295,7 +361,7 @@ def marketplace_menu(db, player):
             print("Нет такого варианта!")
 
 while True:
-    print("\nЧто ты хочешь? 1.В бой! 2.Магазин 3.Персонаж 4.Инвентарь. 5. Торговая площадка 0.Выход")
+    print("\nЧто ты хочешь? 1.В бой! 2.Магазин 3.Персонаж 4.Инвентарь 5.Торговая площадка 6.Квесты 0.Выход")
     smth = input("Выбор: ")
     if smth == '1':
         player = battle(db, player)
@@ -307,6 +373,8 @@ while True:
         show_inventory(db, player)
     elif smth == '5':
         marketplace_menu(db, player)
+    elif smth == '6':
+        quest_menu(db, player)
     elif smth == '0':
         print("Выход из игры.")
         break
@@ -319,4 +387,5 @@ while True:
         player["damage"] = 10
         player["health"] = 100
         player["inventory"] = []
+        player["quests"] = {}
         save_player(db, player)

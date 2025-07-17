@@ -1,45 +1,4 @@
 {
-    "1": {
-        "username": "GNOMIK",
-        "gold": 997930,
-        "damage": 82,
-        "lvl": 341,
-        "health": 115,
-        "inventory": [
-            "\u041a\u0435\u0439\u0441",
-            "\u041a\u0435\u0439\u0441",
-            "\u041a\u0435\u0439\u0441",
-            "\u041a\u0435\u0439\u0441",
-            "\u041c\u0443\u0441\u043e\u0440",
-            "\u041b\u0435\u043a\u0430\u0440\u0441\u0442\u0432\u043e",
-            "\u041b\u0435\u043a\u0430\u0440\u0441\u0442\u0432\u043e",
-            "\u0411\u0438\u043d\u0442"
-        ]
-    },
-    "2": {
-        "username": "PLAYER",
-        "gold": 1000,
-        "damage": 10,
-        "lvl": 1,
-        "health": 100,
-        "inventory": []
-    },
-    "3": {
-        "username": "ERROR",
-        "gold": 52,
-        "damage": 10,
-        "lvl": 21,
-        "health": 35,
-        "inventory": []
-    },
-    "4": {
-        "username": "test",
-        "gold": 44,
-        "damage": 10,
-        "lvl": 14,
-        "health": 28,
-        "inventory": []
-    },
     "marketplace": [
         {
             "slot_id": 1,
@@ -49,12 +8,13 @@
             "buyer_id": null
         }
     ],
-    "6": {
-        "username": "Player 1",
-        "gold": 25,
+    "2": {
+        "username": "GNOMIK",
+        "gold": 10,
         "damage": 10,
-        "lvl": 9,
-        "health": 42,
-        "inventory": []
+        "lvl": 1,
+        "health": 100,
+        "inventory": [],
+        "quests": {}
     }
 }

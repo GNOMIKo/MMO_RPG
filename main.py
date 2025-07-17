@@ -11,11 +11,10 @@ SHOP = game_items['SHOP']
 HEALTH_ITEMS = game_items['HEALTH_ITEMS']
 DAMAGE_ITEMS = game_items['DAMAGE_ITEMS']
 TREASURES = game_items['TREASURES']
+MONSTERS = game_items.get('MONSTERS', {})  # Загружаем монстров
 
 db = JsonDatabase()
 db.load()
-
-
 
 print("Список игроков:")
 for pid, username in db.list_players().items():
@@ -128,26 +127,47 @@ def battle(db, player):
     DAMAGE = player["damage"]
     HEALTH = player["health"]
     max_health = HEALTH
-    monster_health = random.randint(DAMAGE * 5, DAMAGE * 10)
-    monster_damage = random.randint(HEALTH // 20, HEALTH // 8)
+
+    # Выбираем случайного монстра
+    if not MONSTERS:
+        print("Монстры не найдены в game_items.json!")
+        return player
+    monster_name = random.choice(list(MONSTERS.keys()))
+    monster = MONSTERS[monster_name]
+    
+    # Масштабируем характеристики монстра на основе уровня игрока
+    monster_health = monster["base_health"] + (LVL * 10)  # Увеличиваем здоровье на 10 за уровень
+    monster_damage = monster["base_damage"] + (LVL * 2)   # Увеличиваем урон на 2 за уровень
     max_monster_health = monster_health
-    if monster_damage <= 0:
-        monster_damage = HEALTH
-    print(f'\nТвоё здоровье:{HEALTH} Твой урон: {DAMAGE}')
-    print(f'Здоровье монстра:{monster_health} Урон монстра: {monster_damage}')
+    
+    print(f'\n{monster["description"]}')
+    print(f'Твоё здоровье: {HEALTH} Твой урон: {DAMAGE}')
+    print(f'Здоровье {monster_name}: {monster_health} Урон: {monster_damage}')
+    
     while True:
         monster_health -= DAMAGE
         if monster_health <= 0 or HEALTH <= 0:
             if monster_health <= 0:
-                print('\nТы победил!')
+                print(f'\nТы победил {monster_name}!')
                 if HEALTH <= 0:
                     HEALTH = 0
                 HEALTH += monster_damage + 2
                 LVL += (max_monster_health - monster_damage) // 10
-                GOLD += monster_damage + 10
+                GOLD += monster["gold_reward"]
+                
+                # Выпадение предметов
+                drop = random.choices(
+                    [d["item"] for d in monster["item_drops"]],
+                    weights=[d["chance"] for d in monster["item_drops"]],
+                    k=1
+                )[0]
+                if drop != "Мусор":
+                    player["inventory"].append(drop)
+                    print(f'Ты получил: {drop}!')
+                print(f'Получено {monster["gold_reward"]} золота.')
                 break
             elif HEALTH <= 0:
-                print('\nТы проиграл монстру!')
+                print(f'\n{monster_name} победил тебя!')
                 input('Ты пытаешься сбежать...')
                 if random.randint(1, 100) <= 50:
                     print('Сбежал!')
@@ -157,8 +177,9 @@ def battle(db, player):
                     HEALTH = 0
                     print('Не удалось сбежать.')
                 break
-        input(f'Ты бьёшь монстра, у него осталось {monster_health} здоровья.')
+        input(f'Ты бьёшь {monster_name}, у него осталось {monster_health} здоровья.')
         HEALTH -= monster_damage
+    
     player["lvl"] = LVL
     player["gold"] = GOLD
     player["damage"] = DAMAGE
@@ -213,7 +234,6 @@ def buy_item_from_marketplace(db, player, slot_id):
     player["gold"] -= slot["price"]
     player["inventory"].append(slot["item"])
     slot["buyer_id"] = db.current_id
-    # Обновляем marketplace с новым статусом слота
     db.update_marketplace([s if s["slot_id"] != slot_id else slot for s in marketplace])
     save_player(db, player)
     print(f"Ты купил {slot['item']} за {slot['price']} золота!")
@@ -229,7 +249,6 @@ def remove_my_marketplace_slot(db, player, slot_id):
     save_player(db, player)
     print(f"Ты снял с продажи предмет {slot['item']} (ID слота: {slot_id})")
 
-# Пример меню для работы с площадкой:
 def marketplace_menu(db, player):
     while True:
         print("\n--- Маркетплейс ---")

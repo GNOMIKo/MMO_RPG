@@ -19,5 +19,38 @@
     "Сокровище_2": 150,
     "Сокровище_3": 100,
     "Сокровище_4": 50
+  },
+  "MONSTERS": {
+    "Гоблин": {
+      "base_health": 50,
+      "base_damage": 5,
+      "gold_reward": 10,
+      "item_drops": [
+        {"item": "Бинт", "chance": 0.3},
+        {"item": "Мусор", "chance": 0.7}
+      ],
+      "description": "Маленький, но хитрый гоблин, готовый украсть твоё золото!"
+    },
+    "Волк": {
+      "base_health": 80,
+      "base_damage": 8,
+      "gold_reward": 15,
+      "item_drops": [
+        {"item": "Лекарство", "chance": 0.2},
+        {"item": "Мусор", "chance": 0.8}
+      ],
+      "description": "Дикий волк с острыми клыками рычит на тебя!"
+    },
+    "Дракон": {
+      "base_health": 200,
+      "base_damage": 20,
+      "gold_reward": 50,
+      "item_drops": [
+        {"item": "Сокровище_1", "chance": 0.1},
+        {"item": "Кейс", "chance": 0.2},
+        {"item": "Мусор", "chance": 0.7}
+      ],
+      "description": "Огромный дракон, извергающий пламя, преграждает путь!"
+    }
   }
 }

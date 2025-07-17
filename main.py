@@ -166,8 +166,117 @@ def battle(db, player):
     save_player(db, player)
     return player
 
+def get_next_marketplace_id(db):
+    marketplace = db.get_marketplace()
+    if not marketplace:
+        return 1
+    return max(slot["slot_id"] for slot in marketplace) + 1
+
+def show_marketplace(db):
+    marketplace = db.get_marketplace()
+    if not marketplace:
+        print("Маркетплейс пуст.")
+        return
+    print("Слоты маркетплейса:")
+    for slot in marketplace:
+        buyer = slot.get("buyer_id")
+        seller_username = db.data.get(slot["seller_id"], {}).get("username", "Неизвестный")
+        status = "Продано" if buyer else "В продаже"
+        print(f"ID: {slot['slot_id']} | {slot['item']} | Цена: {slot['price']} | Продавец: {seller_username}, ID: {slot['seller_id']} | Статус: {status}")
+
+def add_item_to_marketplace(db, player, item, price):
+    if item not in player["inventory"]:
+        print("У тебя нет такого предмета!")
+        return
+    slot_id = get_next_marketplace_id(db)
+    slot = {
+        "slot_id": slot_id,
+        "item": item,
+        "seller_id": db.current_id,
+        "price": price,
+        "buyer_id": None
+    }
+    db.add_marketplace_slot(slot)
+    player["inventory"].remove(item)
+    save_player(db, player)
+    print(f"Предмет {item} выставлен на продажу за {price} золота (ID слота: {slot_id})")
+
+def buy_item_from_marketplace(db, player, slot_id):
+    marketplace = db.get_marketplace()
+    slot = next((s for s in marketplace if s["slot_id"] == slot_id and s["buyer_id"] is None), None)
+    if not slot:
+        print("Нет такого слота или предмет уже куплен!")
+        return
+    if player["gold"] < slot["price"]:
+        print("Недостаточно золота!")
+        return
+    player["gold"] -= slot["price"]
+    player["inventory"].append(slot["item"])
+    slot["buyer_id"] = db.current_id
+    # Обновляем marketplace с новым статусом слота
+    db.update_marketplace([s if s["slot_id"] != slot_id else slot for s in marketplace])
+    save_player(db, player)
+    print(f"Ты купил {slot['item']} за {slot['price']} золота!")
+
+def remove_my_marketplace_slot(db, player, slot_id):
+    marketplace = db.get_marketplace()
+    slot = next((s for s in marketplace if s["slot_id"] == slot_id and s["seller_id"] == db.current_id and s["buyer_id"] is None), None)
+    if not slot:
+        print("Нет такого слота или предмет уже куплен!")
+        return
+    player["inventory"].append(slot["item"])
+    db.remove_marketplace_slot(slot_id)
+    save_player(db, player)
+    print(f"Ты снял с продажи предмет {slot['item']} (ID слота: {slot_id})")
+
+# Пример меню для работы с площадкой:
+def marketplace_menu(db, player):
+    while True:
+        print("\n--- Маркетплейс ---")
+        print("1. Посмотреть слоты")
+        print("2. Выставить предмет")
+        print("3. Купить предмет")
+        print("4. Снять свой предмет с продажи")
+        print("0. Назад")
+        choice = input("Выбор: ")
+        if choice == "1":
+            show_marketplace(db)
+        elif choice == "2":
+            print("Ваш инвентарь:", player["inventory"])
+            item = input("Что выставить? ").title()
+            if item not in player["inventory"]:
+                print("Нет такого предмета!")
+                continue
+            price = input("Цена: ")
+            try:
+                price = int(price)
+            except ValueError:
+                print("Некорректная цена!")
+                continue
+            add_item_to_marketplace(db, player, item, price)
+        elif choice == "3":
+            slot_id = input("ID слота для покупки: ")
+            try:
+                slot_id = int(slot_id)
+            except ValueError:
+                print("Некорректный ID!")
+                continue
+            buy_item_from_marketplace(db, player, slot_id)
+        elif choice == "4":
+            slot_id = input("ID слота для снятия: ")
+            try:
+                slot_id = int(slot_id)
+            except ValueError:
+                print("Некорректный ID!")
+                continue
+            remove_my_marketplace_slot(db, player, slot_id)
+        elif choice == "0":
+            break
+        else:
+            print("Нет такого варианта!")
+
 while True:
-    print("\nЧто ты хочешь? 1.В бой! 2.Магазин 3.Персонаж 4.Инвентарь.")
+    print("\nЧто ты хочешь? 1.В бой! 2.Магазин 3.Персонаж 4.Инвентарь. 5. Торговая площадка 0.Выход")
     smth = input("Выбор: ")
     if smth == '1':
         player = battle(db, player)
@@ -177,6 +286,11 @@ while True:
         show_character(player)
     elif smth == '4':
         show_inventory(db, player)
+    elif smth == '5':
+        marketplace_menu(db, player)
+    elif smth == '0':
+        print("Выход из игры.")
+        break
     else:
         print('Нет такого варианта!')
     if player["health"] <= 0:

@@ -32,7 +32,30 @@ class JsonDatabase:
         self.save()
 
     def list_players(self):
-        return {pid: pdata['username'] for pid, pdata in self.data.items()}
+        return {
+            pid: pdata['username']
+            for pid, pdata in self.data.items()
+            if isinstance(pdata, dict) and 'username' in pdata
+        }
+
+    def get_marketplace(self):
+        return self.data.get("marketplace", [])
+
+    def add_marketplace_slot(self, slot):
+        marketplace = self.data.get("marketplace", [])
+        marketplace.append(slot)
+        self.data["marketplace"] = marketplace
+        self.save()
+
+    def update_marketplace(self, marketplace_list):
+        self.data["marketplace"] = marketplace_list
+        self.save()
+
+    def remove_marketplace_slot(self, slot_id):
+        marketplace = self.data.get("marketplace", [])
+        marketplace = [slot for slot in marketplace if slot["slot_id"] != slot_id]
+        self.data["marketplace"] = marketplace
+        self.save()
 
 def printd(string):
     print(f'\033[1;32m!!!DevInfo!!!\n{string}\n!!!DevInfo!!!\033[0m')
